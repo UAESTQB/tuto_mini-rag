@@ -1,0 +1,26 @@
+<!-- Navigation commune pour toutes les pages -->
+<nav class="steps-nav">
+    <a href="{{ url_for('index') }}" class="step-link home-link {% if request.endpoint == 'index' %}active{% endif %}" title="Retour à l'accueil">
+        <span class="step-number">🏠</span>
+        <span class="step-label">Accueil</span>
+    </a>
+    
+    <a href="{{ url_for('upload') }}" class="step-link {% if request.endpoint == 'upload' %}active{% endif %}">
+        <span class="step-number">1</span>
+        <span class="step-label">Upload</span>
+    </a>
+    
+    <a href="{{ url_for('indexation') }}" 
+       class="step-link {% if request.endpoint == 'indexation' %}active{% endif %} {% if not has_documents %}disabled{% endif %}"
+       {% if not has_documents %}onclick="return false;"{% endif %}>
+        <span class="step-number">2</span>
+        <span class="step-label">Indexation</span>
+    </a>
+    
+    <a href="{{ url_for('search') }}" 
+       class="step-link {% if request.endpoint == 'search' %}active{% endif %} {% if not has_index %}disabled{% endif %}"
+       {% if not has_index %}onclick="return false;"{% endif %}>
+        <span class="step-number">3</span>
+        <span class="step-label">Utilisation</span>
+    </a>
+</nav>

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Étape 3 : Utiliser les Documents - Mini-RAG</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/search.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 Mini-RAG : Recherche Augmentée par Génération</h1>
+            <p class="subtitle">Étape 3 : Utiliser les Documents</p>
+            {% include 'navigation.html' %}
+            
+            <!-- Configuration Info -->
+            <div class="config-info" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 20px; border-radius: 8px; margin-top: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                    <span style="font-weight: bold; font-size: 1.1em;">🔧 Configuration:</span>
+                    <div style="display: flex; gap: 20px; flex-wrap: wrap; flex: 1;">
+                        <div style="background: rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 5px;">
+                            <strong>Embeddings:</strong> 
+                            {% if embedding_mode == 'local' %}
+                                🏡 Local (Sentence Transformers)
+                            {% else %}
+                                ☁️ OpenAI
+                            {% endif %}
+                        </div>
+                        <div style="background: rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 5px;">
+                            <strong>LLM:</strong> 
+                            {% if llm_mode == 'local' %}
+                                🏡 Local ({{ ollama_model }})
+                            {% else %}
+                                ☁️ OpenAI ({{ openai_model }})
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <!-- Info sur l'index -->
+            <section class="index-info">
+                <div class="info-card">
+                    <h3>📊 Index Disponible</h3>
+                    <div id="indexInfo" class="index-stats">
+                        <div class="stat">
+                            <span class="stat-label">Documents :</span>
+                            <span class="stat-value" id="docCount">-</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Chunks :</span>
+                            <span class="stat-value" id="chunkCount">-</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Modèle :</span>
+                            <span class="stat-value" id="modelName">-</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Zone de chat -->
+            <section class="chat-section">
+                <div class="chat-container">
+                    <div class="chat-header">
+                        <h3>💬 Posez vos questions</h3>
+                        <p>Le système recherchera dans vos documents indexés et générera une réponse contextuelle</p>
+                    </div>
+
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="message system-message">
+                            <div class="message-icon">ℹ️</div>
+                            <div class="message-content">
+                                <p><strong>Bienvenue !</strong></p>
+                                <p>Posez vos questions sur les documents que vous avez indexés. Le système utilisera FAISS pour trouver les passages pertinents et {% if llm_mode == 'local' %}{{ ollama_model }} (Ollama){% else %}OpenAI{% endif %} pour générer une réponse cohérente.</p>
+                                <p class="hint">💡 Exemples : "Quelles sont les étapes décrites ?", "Explique le concept principal", "Quelle est la conclusion du document ?"</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="chat-input-container">
+                        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                            <button id="clearHistoryBtn" class="clear-button" style="background: #dc3545; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 0.9em;">
+                                🗑️ Effacer l'historique
+                            </button>
+                            <span id="historyCount" style="color: #666; padding: 8px; font-size: 0.9em;">
+                                Historique: 0 messages
+                            </span>
+                        </div>
+                        <textarea 
+                            id="questionInput" 
+                            class="chat-input" 
+                            placeholder="Tapez votre question ici..."
+                            rows="3"
+                        ></textarea>
+                        <button id="sendBtn" class="send-button">
+                            <span class="send-icon">📤</span>
+                            <span class="send-text">Envoyer</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Paramètres de recherche -->
+            <section class="settings-section">
+                <details>
+                    <summary>⚙️ Paramètres avancés</summary>
+                    <div class="settings-grid">
+                        <div class="setting-item">
+                            <label for="topK">Nombre de chunks à récupérer (top_k)</label>
+                            <input type="number" id="topK" value="5" min="1" max="20">
+                            <small>Plus de chunks = plus de contexte, mais réponse potentiellement moins focalisée</small>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label for="temperature">Température (créativité)</label>
+                            <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.7">
+                            <output id="tempValue">0.7</output>
+                            <small>0 = très déterministe, 1 = très créatif</small>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label for="maxTokens">Longueur maximale de la réponse (tokens)</label>
+                            <input type="number" id="maxTokens" value="500" min="100" max="2000" step="50">
+                            <small>Limite la longueur de la réponse générée</small>
+                        </div>
+
+                        <div class="setting-item">
+                            <label for="showSources">
+                                <input type="checkbox" id="showSources" checked>
+                                Afficher les sources utilisées
+                            </label>
+                            <small>Montre les extraits de documents utilisés pour la réponse</small>
+                        </div>
+                    </div>
+                </details>
+            </section>
+
+            <!-- Section API cURL -->
+            <section class="api-section" style="background: #f8f9fa; padding: 25px; border-radius: 15px; margin-top: 30px;">
+                <h3 style="color: #667eea; margin-bottom: 20px;">🔌 Utilisation via API (cURL)</h3>
+                <p style="margin-bottom: 15px; color: #555;">
+                    Vous pouvez également interroger le système directement via l'API REST :
+                </p>
+                
+                <div style="position: relative;">
+                    <pre id="curlCode" style="background: #2d2d2d; color: #f8f8f2; padding: 20px; border-radius: 8px; overflow-x: auto; font-size: 0.9em; line-height: 1.6; margin: 0;"><code>curl -X POST http://localhost:5000/api/search -H "Content-Type: application/json" -d "{\"question\": \"Quels sont les principes de base du test logiciel selon ISTQB?\", \"top_k\": 5, \"temperature\": 0.7, \"max_tokens\": 500}"</code></pre>
+                    <button id="copyBtn" onclick="copyCurlCommand()" style="position: absolute; top: 10px; right: 10px; background: #667eea; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 0.85em; transition: all 0.3s;">
+                        📋 Copier
+                    </button>
+                </div>
+
+                <div style="margin-top: 20px; padding: 15px; background: white; border-radius: 8px; border-left: 4px solid #667eea;">
+                    <h4 style="margin: 0 0 10px 0; color: #667eea; font-size: 1em;">Paramètres :</h4>
+                    <ul style="margin: 0; padding-left: 20px; color: #555; line-height: 1.8;">
+                        <li><code style="background: #f0f4ff; padding: 2px 6px; border-radius: 3px; color: #667eea;">question</code> (requis) : Votre question en langage naturel</li>
+                        <li><code style="background: #f0f4ff; padding: 2px 6px; border-radius: 3px; color: #667eea;">top_k</code> (optionnel) : Nombre de chunks à récupérer (défaut: 5)</li>
+                        <li><code style="background: #f0f4ff; padding: 2px 6px; border-radius: 3px; color: #667eea;">temperature</code> (optionnel) : Créativité du LLM 0-1 (défaut: 0.7)</li>
+                        <li><code style="background: #f0f4ff; padding: 2px 6px; border-radius: 3px; color: #667eea;">max_tokens</code> (optionnel) : Longueur max de la réponse (défaut: 500)</li>
+                    </ul>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>© 2025 CFTL JTIA - Tutoriel Mini-RAG | Paris</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/search.js') }}"></script>
+    <script>
+        function copyCurlCommand() {
+            // Commande cURL sur une seule ligne pour Windows cmd
+            const curlCommand = 'curl -X POST http://localhost:5000/api/search -H "Content-Type: application/json" -d "{\\"question\\": \\"Quels sont les principes de base du test logiciel selon ISTQB?\\", \\"top_k\\": 5, \\"temperature\\": 0.7, \\"max_tokens\\": 500}"';
+            
+            navigator.clipboard.writeText(curlCommand).then(() => {
+                const btn = document.getElementById('copyBtn');
+                const originalText = btn.innerHTML;
+                const originalBg = btn.style.background;
+                
+                btn.innerHTML = '✅ Copié !';
+                btn.style.background = '#28a745';
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.style.background = originalBg;
+                }, 2000);
+            }).catch(err => {
+                console.error('Erreur de copie:', err);
+                alert('Erreur lors de la copie. Veuillez copier manuellement.');
+            });
+        }
+    </script>
+</body>
+</html>

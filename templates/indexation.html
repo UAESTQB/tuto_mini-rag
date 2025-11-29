@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Indexation - Mini-RAG</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/indexation.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo-section">
+                <h1>⚡ Indexation des Documents</h1>
+                <p class="subtitle">Étape 2 : Créer l'index vectoriel FAISS</p>
+            </div>
+            {% include 'navigation.html' %}
+            
+            <!-- Configuration Info -->
+            <div class="config-info" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 20px; border-radius: 8px; margin-top: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                    <span style="font-weight: bold; font-size: 1.1em;">🔧 Configuration:</span>
+                    <div style="display: flex; gap: 20px; flex-wrap: wrap; flex: 1;">
+                        <div style="background: rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 5px;">
+                            <strong>Embeddings:</strong> 
+                            {% if embedding_mode == 'local' %}
+                                🏡 Local (Sentence Transformers)
+                            {% else %}
+                                ☁️ OpenAI
+                            {% endif %}
+                        </div>
+                        <div style="background: rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 5px;">
+                            <strong>LLM:</strong> 
+                            {% if llm_mode == 'local' %}
+                                🏡 Local ({{ ollama_model }})
+                            {% else %}
+                                ☁️ OpenAI ({{ openai_model }})
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <!-- Informations sur l'indexation -->
+            <section class="info-section">
+                <div class="info-box">
+                    <h3>📊 Processus d'indexation</h3>
+                    <p>
+                        L'indexation va extraire le texte de vos documents, les découper en chunks optimisés, 
+                        puis générer des embeddings vectoriels avec OpenAI pour créer un index FAISS performant.
+                    </p>
+                </div>
+            </section>
+
+            <!-- Configuration de l'indexation -->
+            <section class="config-section">
+                <h3>⚙️ Configuration</h3>
+                <div class="config-grid">
+                    <div class="config-item">
+                        <label for="chunkSize">Taille des chunks (tokens)</label>
+                        <input type="number" id="chunkSize" value="500" min="100" max="2000" step="50">
+                        <small>Recommandé: 500 tokens</small>
+                        <p class="config-description">
+                            📝 <strong>Qu'est-ce qu'un chunk?</strong> Le texte de vos documents est découpé en morceaux (chunks) pour l'indexation.<br>
+                            🎯 <strong>Impact de la taille:</strong><br>
+                            • <strong>Petits chunks (100-300 tokens):</strong> Recherche très précise, mais peut manquer le contexte global. Idéal pour des réponses courtes et ciblées.<br>
+                            • <strong>Chunks moyens (400-600 tokens):</strong> Bon équilibre entre précision et contexte. Recommandé pour la plupart des cas.<br>
+                            • <strong>Grands chunks (700-2000 tokens):</strong> Conserve plus de contexte, mais peut inclure des informations non pertinentes. Utile pour des documents narratifs.
+                        </p>
+                    </div>
+                    
+                    <div class="config-item">
+                        <label for="chunkOverlap">Chevauchement (tokens)</label>
+                        <input type="number" id="chunkOverlap" value="50" min="0" max="200" step="10">
+                        <small>Recommandé: 50 tokens</small>
+                        <p class="config-description">
+                            🔗 <strong>Pourquoi un chevauchement?</strong> Les chunks se superposent légèrement pour éviter de couper des informations importantes.<br>
+                            🎯 <strong>Impact du chevauchement:</strong><br>
+                            • <strong>Sans chevauchement (0):</strong> Risque de couper des phrases ou concepts au milieu. Économise de l'espace mais perd en qualité.<br>
+                            • <strong>Chevauchement léger (20-50):</strong> Maintient la continuité entre chunks. Recommandé pour un bon équilibre.<br>
+                            • <strong>Chevauchement important (100-200):</strong> Assure une meilleure cohérence, mais augmente la taille de l'index et les coûts d'embedding.
+                        </p>
+                    </div>
+                    
+                    <div class="config-item">
+                        <label for="embeddingModel">Modèle d'embedding</label>
+                        <select id="embeddingModel">
+                            <option value="text-embedding-3-small" selected>text-embedding-3-small (Recommandé)</option>
+                            <option value="text-embedding-3-large">text-embedding-3-large (Plus précis)</option>
+                            <option value="text-embedding-ada-002">text-embedding-ada-002 (Legacy)</option>
+                        </select>
+                        <small>text-embedding-3-small: Rapide et efficace</small>
+                        <p class="config-description">
+                            🧠 <strong>Qu'est-ce qu'un embedding?</strong> Chaque chunk est transformé en un vecteur numérique qui capture son sens sémantique.<br>
+                            🎯 <strong>Comparaison des modèles:</strong><br>
+                            • <strong>text-embedding-3-small:</strong> 1536 dimensions, rapide, économique. Performance excellente pour la plupart des cas d'usage.<br>
+                            • <strong>text-embedding-3-large:</strong> 3072 dimensions, plus précis, plus lent et plus coûteux. Pour des besoins très exigeants.<br>
+                            • <strong>text-embedding-ada-002:</strong> Ancien modèle (1536 dim). Moins performant que 3-small, déconseillé pour de nouveaux projets.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Statut de l'index actuel -->
+            <section class="status-section">
+                <h3>📈 Statut de l'index</h3>
+                <div class="status-box" id="statusBox">
+                    <div class="status-item">
+                        <span class="status-label">Documents disponibles:</span>
+                        <span class="status-value" id="docCount">{{ file_count }}</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Index créé:</span>
+                        <span class="status-value" id="indexStatus">
+                            {% if index_exists %}
+                            <span class="status-badge success">✓ Oui</span>
+                            {% else %}
+                            <span class="status-badge warning">✗ Non</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                    {% if index_stats %}
+                    <div class="status-item">
+                        <span class="status-label">Total chunks indexés:</span>
+                        <span class="status-value">{{ index_stats.total_chunks }}</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Modèle utilisé:</span>
+                        <span class="status-value">{{ index_stats.model }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </section>
+
+            <!-- Bouton d'indexation -->
+            <section class="action-section">
+                <button class="index-button" id="indexButton" onclick="startIndexation()" {% if file_count == 0 %}disabled{% endif %}>
+                    <span class="button-icon">🚀</span>
+                    <span class="button-text">Lancer l'indexation</span>
+                </button>
+                
+                {% if index_exists %}
+                <button class="reindex-button" onclick="startIndexation()">
+                    <span class="button-icon">🔄</span>
+                    <span class="button-text">Ré-indexer</span>
+                </button>
+                <button class="delete-index-button" onclick="deleteIndex()">
+                    <span class="button-icon">🗑️</span>
+                    <span class="button-text">Supprimer l'index</span>
+                </button>
+                <button class="use-button" onclick="window.location.href='{{ url_for('search') }}'">
+                    <span class="button-icon">📚</span>
+                    <span class="button-text">Utiliser les documents</span>
+                </button>
+                {% endif %}
+            </section>
+
+            <!-- Avertissement changement de mode -->
+            {% if index_exists %}
+            <section class="warning-section" style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 5px;">
+                <h4 style="margin: 0 0 10px 0; color: #856404;">⚠️ Important : Cohérence des embeddings</h4>
+                <p style="margin: 0; color: #856404;">
+                    L'index actuel a été créé en mode <strong>{{ embedding_mode }}</strong>. 
+                    Si vous changez le mode d'embedding dans le fichier <code>.env</code>, 
+                    vous devez <strong>supprimer et ré-indexer</strong> vos documents.
+                </p>
+                <p style="margin: 10px 0 0 0; color: #856404;">
+                    <strong>Raison :</strong> OpenAI (1536D) et Sentence Transformers (384D) produisent des vecteurs 
+                    de dimensions différentes et incompatibles. Le LLM peut être changé librement.
+                </p>
+            </section>
+            {% endif %}
+
+            <!-- Progression de l'indexation -->
+            <section class="progress-section" id="progressSection" style="display: none;">
+                <h3>⏳ Indexation en cours...</h3>
+                <div class="indexation-progress">
+                    <div class="step-progress" id="stepProgress">
+                        <div class="step" id="step1">
+                            <div class="step-icon">📄</div>
+                            <div class="step-label">Extraction</div>
+                            <div class="step-status" id="status1">En attente...</div>
+                        </div>
+                        <div class="step" id="step2">
+                            <div class="step-icon">✂️</div>
+                            <div class="step-label">Chunking</div>
+                            <div class="step-status" id="status2">En attente...</div>
+                        </div>
+                        <div class="step" id="step3">
+                            <div class="step-icon">🧠</div>
+                            <div class="step-label">Embeddings</div>
+                            <div class="step-status" id="status3">En attente...</div>
+                        </div>
+                        <div class="step" id="step4">
+                            <div class="step-icon">💾</div>
+                            <div class="step-label">Sauvegarde</div>
+                            <div class="step-status" id="status4">En attente...</div>
+                        </div>
+                    </div>
+                    
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" id="progressBarFill"></div>
+                    </div>
+                    <div class="progress-text" id="progressText">0%</div>
+                </div>
+                
+                <div class="log-container" id="logContainer">
+                    <h4>📋 Logs</h4>
+                    <div class="log-content" id="logContent"></div>
+                </div>
+            </section>
+
+            <!-- Résultats de l'indexation -->
+            <section class="results-section" id="resultsSection" style="display: none;">
+                <h3>✅ Indexation terminée !</h3>
+                <div class="results-grid" id="resultsGrid"></div>
+                
+                <div class="next-action">
+                    <button class="cta-button" onclick="window.location.href='{{ url_for('search') }}'">
+                        Étape 3 : Utiliser les documents →
+                    </button>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>© 2025 CFTL JTIA - Tutoriel Mini-RAG | Paris</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/indexation.js') }}"></script>
+</body>
+</html>

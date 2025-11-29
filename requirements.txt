@@ -1,0 +1,19 @@
+flask==3.0.0
+python-dotenv==1.0.0
+
+# Traitement de documents
+PyPDF2==3.0.1
+python-docx==1.1.0
+markdown==3.5.1
+
+# RAG et embeddings
+openai>=1.40.0,<2.0.0  # Version récente avec support des clés projet
+faiss-cpu==1.7.4
+numpy==1.26.4  # Version compatible avec FAISS, torch et sentence-transformers
+tiktoken==0.5.1
+httpx<0.28.0  # Éviter les incompatibilités avec certaines versions de openai
+
+# Mode local (optionnel)
+sentence-transformers==3.3.1  # Embeddings locaux (version stable compatible)
+ollama==0.6.1  # Client pour modèles LLM locaux
+torch==2.5.1  # Version compatible avec sentence-transformers 3.3.1

@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutoriel Mini-RAG - CFTL JTIA 2025</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo-section">
+                <h1>🚀 Mini-RAG Pipeline</h1>
+                <p class="subtitle">CFTL JTIA 2025 - Paris</p>
+            </div>
+            {% include 'navigation.html' %}
+            
+            <!-- Configuration Info -->
+            <div class="config-info" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 20px; border-radius: 8px; margin-top: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                    <span style="font-weight: bold; font-size: 1.1em;">🔧 Configuration:</span>
+                    <div style="display: flex; gap: 20px; flex-wrap: wrap; flex: 1;">
+                        <div style="background: rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 5px;">
+                            <strong>Embeddings:</strong> 
+                            {% if embedding_mode == 'local' %}
+                                🏡 Local (Sentence Transformers)
+                            {% else %}
+                                ☁️ OpenAI
+                            {% endif %}
+                        </div>
+                        <div style="background: rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 5px;">
+                            <strong>LLM:</strong> 
+                            {% if llm_mode == 'local' %}
+                                🏡 Local ({{ ollama_model }})
+                            {% else %}
+                                ☁️ OpenAI ({{ openai_model }})
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main id="top">
+            <nav class="page-navigation">
+                <h3>📑 Navigation</h3>
+                <ul>
+                    <li><a href="#description">📋 Description du Tutoriel</a></li>
+                    <li><a href="#openai">🤖 OpenAI Embeddings</a></li>
+                    <li><a href="#faiss">🗄️ FAISS</a></li>
+                    <li><a href="#fonctionnement">⚙️ Comment ça Fonctionne</a></li>
+                    <li><a href="#objectifs">🎯 Objectifs d'Apprentissage</a></li>
+                    <li><a href="#stack">🛠️ Stack Technique</a></li>
+                    <li><a href="#prerequis">✅ Prérequis</a></li>
+                    <li><a href="#confidentialite">🔒 Confidentialité</a></li>
+                    <li><a href="#local">🏡 Mode Local</a></li>
+                </ul>
+            </nav>
+
+            <a href="#top" class="back-to-top" title="Retour au début">
+                ⬆️
+            </a>
+
+            <section class="welcome-section">
+
+                <h2>Bienvenue au Tutoriel</h2>
+                <p class="intro">
+                    Découvrez comment construire un pipeline RAG (Retrieval-Augmented Generation) 
+                    pour générer automatiquement des cas de test et des rapports QA.
+                </p>
+
+                <section class="cta-section">
+                    <div class="cta-box">
+                        <h3>Prêt à commencer ?</h3>
+                        <p>Suivez les étapes du tutoriel pour construire votre propre pipeline RAG</p>
+                        <a href="{{ url_for('upload') }}" class="cta-button">
+                            Démarrer le Tutoriel
+                        </a>
+                    </div>
+                </section>
+
+
+               
+            </section>
+
+            <section class="description-section" id="description">
+                <h3>📋 Description du Tutoriel</h3>
+                <div class="description-content">
+                    <p>
+                        Les participants construiront, <strong>en local avec VS Code</strong>, un mini-pipeline RAG 
+                        combinant <strong>OpenAI Embeddings</strong> et <strong>FAISS</strong> pour indexer un corpus 
+                        (spécifications, user stories, tickets, …), interroger efficacement les documents, 
+                        puis générer automatiquement des cas de test ainsi qu'un rapport QA.
+                    </p>
+                    
+                    <p>
+                        Le parcours couvre le <strong>chunking</strong>, la <strong>vectorisation</strong>, 
+                        le <strong>retrieval</strong>, l'assemblage de prompts et la génération contrôlée, 
+                        avec un accent sur la qualité des sources et la réduction des hallucinations.
+                    </p>
+                    
+                    <p>
+                        À l'issue du tutoriel, chaque participant repart avec un <strong>starter fonctionnel</strong> 
+                        (scripts Python, prompts réutilisables) et des pistes d'industrialisation : 
+                        évaluation, gouvernance du corpus, intégration CI/CD.
+                    </p>
+                </div>
+            </section>
+
+            <section class="tech-explanation" id="openai">
+                <h3>🤖 OpenAI Embeddings</h3>
+                <div class="description-content">
+                    <p>
+                        Les <strong>embeddings OpenAI</strong> sont des représentations vectorielles de texte qui capturent 
+                        le sens sémantique des mots et phrases. Le modèle <strong>text-embedding-3-small</strong> transforme 
+                        chaque morceau de texte en un vecteur de <strong>1536 dimensions</strong>.
+                    </p>
+                    
+                    <p>
+                        Ces vecteurs permettent de mesurer la <strong>similarité sémantique</strong> entre deux textes : 
+                        des textes qui ont un sens proche auront des vecteurs proches dans l'espace vectoriel, 
+                        même s'ils n'utilisent pas les mêmes mots exacts.
+                    </p>
+                    
+                    <p>
+                        <strong>Avantage clé :</strong> Contrairement à une recherche par mots-clés traditionnelle, 
+                        les embeddings comprennent le contexte et les nuances du langage naturel.
+                    </p>
+                </div>
+            </section>
+
+            <section class="tech-explanation" id="faiss">
+                <h3>🗄️ FAISS (Facebook AI Similarity Search)</h3>
+                <div class="description-content">
+                    <p>
+                        <strong>FAISS</strong> est une bibliothèque développée par Meta (Facebook) qui permet de 
+                        rechercher efficacement des vecteurs similaires parmi des millions d'embeddings. 
+                        Elle utilise des <strong>algorithmes optimisés</strong> pour effectuer des recherches 
+                        de similarité très rapidement.
+                    </p>
+                    
+                    <p>
+                        Dans notre pipeline RAG, FAISS <strong>indexe tous les chunks de documents</strong> sous forme 
+                        de vecteurs. Quand vous posez une question, celle-ci est aussi transformée en vecteur, 
+                        puis FAISS trouve instantanément les <strong>k documents les plus similaires</strong> 
+                        (recherche par k-NN : k plus proches voisins).
+                    </p>
+                    
+                    <p>
+                        <strong>Avantage clé :</strong> Performances exceptionnelles même avec de grandes quantités 
+                        de documents, et fonctionne entièrement en local sans nécessiter de base de données externe.
+                    </p>
+
+                    <h4 style="margin-top: 30px;">📦 Stockage des Embeddings</h4>
+                    <p>
+                        Les vecteurs d'embeddings sont stockés dans le dossier <code>data/</code> de l'application :
+                    </p>
+                    <ul>
+                        <li>
+                            <strong><code>data/faiss_index.bin</code></strong> - Contient l'index FAISS avec tous les vecteurs d'embeddings. 
+                            C'est ici que FAISS effectue ses recherches ultra-rapides de similarité.
+                        </li>
+                        <li>
+                            <strong><code>data/index_metadata.pkl</code></strong> - Contient les métadonnées associées : 
+                            texte original des chunks, sources des documents, et informations de traçabilité.
+                        </li>
+                    </ul>
+                    
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 15px;">
+                        <p><strong>🔄 Processus d'indexation :</strong></p>
+                        <ol>
+                            <li>Découpage des documents en chunks</li>
+                            <li>Génération d'un embedding (vecteur) pour chaque chunk via OpenAI ou Sentence Transformers</li>
+                            <li>Stockage de tous les vecteurs dans l'index FAISS (<code>faiss_index.bin</code>)</li>
+                            <li>Sauvegarde des textes originaux et métadonnées (<code>index_metadata.pkl</code>)</li>
+                        </ol>
+                        
+                        <p style="margin-top: 10px;"><strong>🔍 Processus de recherche :</strong></p>
+                        <ol>
+                            <li>Transformation de votre question en vecteur</li>
+                            <li>FAISS recherche les vecteurs les plus similaires dans l'index</li>
+                            <li>Récupération des chunks correspondants depuis les métadonnées</li>
+                            <li>Génération de la réponse par le LLM basée sur ces chunks</li>
+                        </ol>
+                    </div>
+                    
+                    <p style="margin-top: 15px;">
+                        💡 <strong>Persistance :</strong> Ces fichiers persistent entre les sessions - vous pouvez fermer 
+                        l'application et l'index sera automatiquement rechargé au redémarrage.
+                    </p>
+                </div>
+            </section>
+
+            <section class="tech-explanation" id="fonctionnement">
+                <h3>⚙️ Comment cette Application Fonctionne</h3>
+                <div class="description-content">
+                    <p>
+                        Cette application implémente un pipeline RAG complet en <strong>3 étapes simples</strong> :
+                    </p>
+                    
+                    <div class="workflow-steps">
+                        <div class="workflow-step">
+                            <div class="workflow-number">1️⃣</div>
+                            <div class="workflow-details">
+                                <h4>Upload de Documents</h4>
+                                <p>
+                                    Vous uploadez vos documents (PDF, TXT, DOC, DOCX, Markdown). 
+                                    L'application extrait le texte et le stocke localement.
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="workflow-step">
+                            <div class="workflow-number">2️⃣</div>
+                            <div class="workflow-details">
+                                <h4>Indexation</h4>
+                                <p>
+                                    Le texte est découpé en <strong>chunks</strong> (morceaux de 500 tokens avec chevauchement). 
+                                    Chaque chunk est transformé en <strong>embedding via OpenAI</strong>, puis indexé dans 
+                                    <strong>FAISS</strong> pour permettre une recherche rapide.
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="workflow-step">
+                            <div class="workflow-number">3️⃣</div>
+                            <div class="workflow-details">
+                                <h4>Recherche & Génération</h4>
+                                <p>
+                                    Vous posez une question. L'application la transforme en vecteur, 
+                                    <strong>retrouve les chunks pertinents</strong> via FAISS, puis utilise 
+                                    <strong>GPT-4o-mini</strong> pour générer une réponse basée sur ces sources. 
+                                    Les sources utilisées sont affichées pour garantir la traçabilité.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <p style="margin-top: 20px;">
+                        <strong>🎯 Résultat :</strong> Des réponses précises et contextuelles basées sur vos propres documents, 
+                        avec une réduction drastique des hallucinations grâce au grounding sur vos sources.
+                    </p>
+                </div>
+            </section>
+
+            <section class="features-section" id="objectifs">
+                <h3>🎯 Ce que vous allez apprendre</h3>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">📚</div>
+                        <h4>Chunking & Vectorisation</h4>
+                        <p>Découper et transformer vos documents en vecteurs pour une recherche efficace</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🔍</div>
+                        <h4>Retrieval Intelligent</h4>
+                        <p>Interroger votre corpus avec FAISS pour récupérer les documents pertinents</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">✍️</div>
+                        <h4>Génération de Tests</h4>
+                        <p>Créer automatiquement des cas de test à partir de vos spécifications</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <h4>Rapports QA</h4>
+                        <p>Générer des rapports de qualité structurés et pertinents</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🎓</div>
+                        <h4>Réduction des Hallucinations</h4>
+                        <p>Techniques pour garantir la qualité et la fiabilité des résultats</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🚢</div>
+                        <h4>Industrialisation</h4>
+                        <p>Pistes pour intégrer votre solution en production (CI/CD, gouvernance)</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="tech-stack" id="stack">
+                <h3>🛠️ Stack Technique</h3>
+                <div class="tech-items">
+                    <span class="tech-badge">Python</span>
+                    <span class="tech-badge">OpenAI Embeddings</span>
+                    <span class="tech-badge">FAISS</span>
+                    <span class="tech-badge">VS Code</span>
+                    <span class="tech-badge">Flask</span>
+                </div>
+            </section>
+
+            <section class="prerequisites-section" id="prerequis">
+                <h3>✅ Prérequis pour cet Atelier</h3>
+                <div class="prerequisites-content">
+                    <div class="prerequisite-category">
+                        <h4>🐍 Environnement Python</h4>
+                        <ul>
+                            <li><strong>Python 3.8+</strong> installé sur votre machine</li>
+                            <li>Connaissance de base de Python (variables, fonctions, boucles)</li>
+                            <li>Capacité à créer et activer un environnement virtuel (venv)</li>
+                        </ul>
+                    </div>
+
+                    <div class="prerequisite-category">
+                        <h4>💻 Outils de Développement</h4>
+                        <ul>
+                            <li><strong>VS Code</strong> ou un éditeur de code similaire</li>
+                            <li>Terminal/ligne de commande (cmd, PowerShell, bash)</li>
+                            <li>Git (optionnel, pour cloner le projet)</li>
+                        </ul>
+                    </div>
+
+                    <div class="prerequisite-category">
+                        <h4>🔑 Accès OpenAI</h4>
+                        <ul>
+                            <li><strong>Clé API OpenAI</strong> fournie pour cet atelier</li>
+                            <li>La clé API sera configurée dans le fichier <code>.env</code></li>
+                            <li>Vous pouvez également utiliser votre propre clé si vous le souhaitez</li>
+                        </ul>
+                    </div>
+
+                    <div class="prerequisite-category">
+                        <h4>📦 Dépendances Python</h4>
+                        <ul>
+                            <li><code>flask</code> - Framework web</li>
+                            <li><code>openai</code> - Client OpenAI officiel</li>
+                            <li><code>faiss-cpu</code> - Recherche de similarité vectorielle</li>
+                            <li><code>python-dotenv</code> - Gestion des variables d'environnement</li>
+                            <li><code>PyPDF2</code>, <code>python-docx</code>, <code>markdown</code> - Extraction de texte</li>
+                            <li><code>tiktoken</code> - Comptage de tokens</li>
+                            <li><code>sentence-transformers</code> - Embeddings locaux (optionnel)</li>
+                            <li><code>ollama</code> - LLM locaux (optionnel)</li>
+                            <li><code>torch</code> - Support pour les modèles locaux (optionnel)</li>
+                        </ul>
+                        <p class="install-note">
+                            💡 <strong>Installation automatique :</strong> Un fichier <code>requirements.txt</code> 
+                            est fourni pour installer toutes les dépendances avec 
+                            <code>pip install -r requirements.txt</code>
+                        </p>
+                    </div>
+
+                    <div class="prerequisite-category">
+                        <h4>📚 Connaissances Recommandées</h4>
+                        <ul>
+                            <li>Notions de base en <strong>Machine Learning</strong> (utile mais non obligatoire)</li>
+                            <li>Compréhension des concepts de <strong>NLP</strong> (Natural Language Processing)</li>
+                            <li>Familiarité avec les <strong>API REST</strong></li>
+                            <li>Intérêt pour le <strong>testing automatisé</strong> et la QA</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section class="privacy-section" id="confidentialite">
+                <h3>🔒 Confidentialité et Données</h3>
+                <div class="privacy-content">
+                    <div class="privacy-warning">
+                        <h4>⚠️ Important : Ce qui est envoyé à OpenAI</h4>
+                        <p>
+                            Dans la configuration actuelle, <strong>vos documents sont envoyés à OpenAI</strong> 
+                            lors de l'indexation et de la recherche :
+                        </p>
+                        <ul>
+                            <li><strong>À l'indexation :</strong> Tout le contenu de vos documents (découpé en chunks) est envoyé pour créer les embeddings</li>
+                            <li><strong>À la recherche :</strong> Votre question et les chunks pertinents récupérés sont envoyés au modèle GPT pour générer la réponse</li>
+                        </ul>
+                    </div>
+
+                    <div class="privacy-policy">
+                        <h4>📋 Politique OpenAI</h4>
+                        <ul>
+                            <li>✅ Les données API <strong>ne sont PAS utilisées pour entraîner les modèles</strong> (depuis mars 2023)</li>
+                            <li>✅ Rétention : <strong>30 jours</strong> pour monitoring d'abus, puis suppression automatique</li>
+                            <li>❌ Les données <strong>transitent par les serveurs OpenAI</strong></li>
+                            <li>❌ <strong>Non recommandé</strong> pour des données sensibles ou confidentielles</li>
+                        </ul>
+                    </div>
+
+                    <div class="local-data">
+                        <h4>🏠 Ce qui reste local</h4>
+                        <ul>
+                            <li>✅ <strong>Index FAISS</strong> (<code>faiss_index.bin</code>) - stocké sur votre machine</li>
+                            <li>✅ <strong>Métadonnées</strong> (<code>index_metadata.pkl</code>) - stocké localement</li>
+                            <li>✅ <strong>Documents originaux</strong> (dossier <code>uploads/</code>) - restent locaux</li>
+                            <li>✅ <strong>Recherche de similarité</strong> (FAISS) - calcul en local</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section class="local-mode-section" id="local">
+                <h3>🏡 Passer en Mode 100% Local (Sans OpenAI)</h3>
+                <div class="local-mode-content">
+                    <div class="local-intro">
+                        <p>
+                            Pour garantir une <strong>confidentialité totale</strong>, vous pouvez utiliser des modèles 
+                            locaux qui ne transmettent <strong>aucune donnée</strong> à des serveurs externes. 
+                            Vos documents restent entièrement sur votre machine.
+                        </p>
+                    </div>
+
+                    <div class="local-stack">
+                        <h4>🛠️ Stack Locale</h4>
+                        <div class="tech-items">
+                            <span class="tech-badge local">Sentence Transformers</span>
+                            <span class="tech-badge local">FAISS</span>
+                            <span class="tech-badge local">Ollama / Llama</span>
+                        </div>
+                        <p style="margin-top: 15px; color: #555;">
+                            <strong>Sentence Transformers</strong> pour les embeddings locaux → 
+                            <strong>FAISS</strong> pour l'indexation → 
+                            <strong>Ollama</strong> pour la génération de réponses
+                        </p>
+                    </div>
+
+                    <div class="setup-steps">
+                        <h4>📋 Étapes de Configuration (une seule fois)</h4>
+                        
+                        <div class="setup-step">
+                            <div class="setup-number">1</div>
+                            <div class="setup-content">
+                                <h5>Installer les dépendances Python</h5>
+                                <div class="code-block">
+                                    <code>pip install sentence-transformers ollama</code>
+                                </div>
+                                <p>Temps : ~2 minutes | Taille : ~500 MB</p>
+                            </div>
+                        </div>
+
+                        <div class="setup-step">
+                            <div class="setup-number">2</div>
+                            <div class="setup-content">
+                                <h5>Installer Ollama</h5>
+                                <ul>
+                                    <li><strong>Windows :</strong> Télécharger l'installeur depuis <a href="https://ollama.com" target="_blank">ollama.com</a></li>
+                                    <li><strong>Mac/Linux :</strong> <code>curl -fsSL https://ollama.com/install.sh | sh</code></li>
+                                </ul>
+                                <p>Temps : ~2 minutes | Taille : ~500 MB</p>
+                            </div>
+                        </div>
+
+                        <div class="setup-step">
+                            <div class="setup-number">3</div>
+                            <div class="setup-content">
+                                <h5>Télécharger un modèle LLM</h5>
+                                <div class="code-block">
+                                    <code>ollama pull llama3.2:3b</code>
+                                    <span class="code-comment"># Modèle léger (1.9 GB)</span>
+                                </div>
+                                <div class="code-block" style="margin-top: 8px;">
+                                    <code>ollama pull mistral:7b</code>
+                                    <span class="code-comment"># Plus performant (4.1 GB)</span>
+                                </div>
+                                <p>Temps : ~5-10 minutes | Taille : 2-4 GB</p>
+                            </div>
+                        </div>
+
+                        <div class="setup-step">
+                            <div class="setup-number">4</div>
+                            <div class="setup-content">
+                                <h5>Configurer le mode local</h5>
+                                <p>Dans le fichier <code>.env</code>, ajouter :</p>
+                                <div class="code-block">
+                                    <code>EMBEDDING_MODE=local</code><br>
+                                    <code>LLM_MODE=local</code><br>
+                                    <code>OLLAMA_MODEL=llama3.2:3b</code>
+                                </div>
+                                <p>Temps : ~30 secondes</p>
+                            </div>
+                        </div>
+
+                        <div class="setup-step">
+                            <div class="setup-number">5</div>
+                            <div class="setup-content">
+                                <h5>Lancer l'application</h5>
+                                <div class="code-block">
+                                    <code>flask run</code>
+                                </div>
+                                <p>✅ <strong>C'est tout !</strong> Ollama se lance automatiquement en arrière-plan. 
+                                   Au premier lancement, Sentence Transformers téléchargera son modèle (~80 MB).</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="setup-summary">
+                        <h4>⏱️ Résumé du Setup Initial</h4>
+                        <table class="summary-table">
+                            <tr>
+                                <th>Étape</th>
+                                <th>Temps</th>
+                                <th>Taille</th>
+                            </tr>
+                            <tr>
+                                <td>Dépendances Python</td>
+                                <td>~2 min</td>
+                                <td>~500 MB</td>
+                            </tr>
+                            <tr>
+                                <td>Installer Ollama</td>
+                                <td>~2 min</td>
+                                <td>~500 MB</td>
+                            </tr>
+                            <tr>
+                                <td>Télécharger modèle LLM</td>
+                                <td>~5-10 min</td>
+                                <td>2-4 GB</td>
+                            </tr>
+                            <tr>
+                                <td>Premier lancement (embeddings)</td>
+                                <td>~30 sec</td>
+                                <td>~80 MB</td>
+                            </tr>
+                            <tr class="total-row">
+                                <td><strong>TOTAL</strong></td>
+                                <td><strong>~10-15 min</strong></td>
+                                <td><strong>~3-5 GB</strong></td>
+                            </tr>
+                        </table>
+                        <p class="summary-note">
+                            ⚠️ <strong>Après le setup initial</strong>, un simple <code>flask run</code> suffit, 
+                            comme avec OpenAI !
+                        </p>
+                    </div>
+
+                    <div class="comparison">
+                        <h4>⚖️ Comparaison OpenAI vs Local</h4>
+                        <table class="comparison-table">
+                            <tr>
+                                <th>Critère</th>
+                                <th>OpenAI</th>
+                                <th>100% Local</th>
+                            </tr>
+                            <tr>
+                                <td><strong>Performance</strong></td>
+                                <td>⭐⭐⭐⭐⭐ Excellente</td>
+                                <td>⭐⭐⭐⭐ Très bonne</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Coût</strong></td>
+                                <td>❌ Payant (API)</td>
+                                <td>✅ Gratuit</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Confidentialité</strong></td>
+                                <td>⚠️ Données envoyées au cloud</td>
+                                <td>✅ 100% privé</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Configuration</strong></td>
+                                <td>✅ Simple (clé API)</td>
+                                <td>⚠️ Setup initial requis</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Ressources</strong></td>
+                                <td>✅ Faibles</td>
+                                <td>⚠️ GPU recommandé</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Connexion Internet</strong></td>
+                                <td>❌ Obligatoire</td>
+                                <td>✅ Fonctionne offline</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div class="recommendation">
+                        <h4>🎯 Recommandation</h4>
+                        <p>
+                            <strong>Pour l'atelier :</strong> Mode OpenAI (simplicité, performances optimales)<br>
+                            <strong>Pour la production avec données sensibles :</strong> Mode 100% Local (confidentialité garantie)<br>
+                            <strong>Idéal :</strong> Application avec mode dual configurable selon vos besoins
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            
+        </main>
+
+        <footer>
+            <p>© 2025 CFTL JTIA - Tutoriel Mini-RAG | Paris</p>
+        </footer>
+    </div>
+</body>
+</html>

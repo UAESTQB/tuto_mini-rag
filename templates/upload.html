@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Documents - Mini-RAG</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/upload.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo-section">
+                <h1>📄 Upload de Documents</h1>
+                <p class="subtitle">Étape 1 : Préparez votre corpus</p>
+            </div>
+            {% include 'navigation.html' %}
+            
+            <!-- Configuration Info -->
+            <div class="config-info" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 20px; border-radius: 8px; margin-top: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                    <span style="font-weight: bold; font-size: 1.1em;">🔧 Configuration:</span>
+                    <div style="display: flex; gap: 20px; flex-wrap: wrap; flex: 1;">
+                        <div style="background: rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 5px;">
+                            <strong>Embeddings:</strong> 
+                            {% if embedding_mode == 'local' %}
+                                🏡 Local (Sentence Transformers)
+                            {% else %}
+                                ☁️ OpenAI
+                            {% endif %}
+                        </div>
+                        <div style="background: rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 5px;">
+                            <strong>LLM:</strong> 
+                            {% if llm_mode == 'local' %}
+                                🏡 Local ({{ ollama_model }})
+                            {% else %}
+                                ☁️ OpenAI ({{ openai_model }})
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <section class="upload-section">
+                <div class="upload-info">
+                    <h3>📚 Formats acceptés</h3>
+                    <p>PDF, TXT, DOC, DOCX, MD (max 256 MB par fichier)</p>
+                    <p class="info-text">
+                        💡 <strong>Conseil :</strong> Pour de meilleurs résultats, utilisez des documents structurés 
+                        (spécifications, user stories, tickets, documentation technique).
+                    </p>
+                </div>
+
+                <!-- Zone de drop -->
+                <div class="upload-container" id="uploadContainer">
+                    <div class="upload-zone" id="uploadZone">
+                        <div class="upload-icon">📁</div>
+                        <h3>Glissez-déposez vos fichiers ici</h3>
+                        <p>ou</p>
+                        <label for="fileInput" class="file-button">
+                            Parcourir les fichiers
+                        </label>
+                        <input type="file" id="fileInput" multiple accept=".pdf,.txt,.doc,.docx,.md" style="display: none;">
+                    </div>
+
+                    <!-- Barre de progression -->
+                    <div class="progress-container" id="progressContainer" style="display: none;">
+                        <div class="progress-info">
+                            <span id="progressFileName">fichier.pdf</span>
+                            <span id="progressPercent">0%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                        <div class="progress-status" id="progressStatus">Upload en cours...</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Liste des documents uploadés -->
+            <section class="documents-section">
+                <div class="section-header">
+                    <h3>📋 Documents uploadés (<span id="fileCount">{{ files|length }}</span>)</h3>
+                    <div class="header-buttons">
+                        <button class="refresh-button" onclick="refreshFileList()">🔄 Actualiser</button>
+                        <button class="delete-all-button" onclick="deleteAllFiles()" {% if not files %}disabled{% endif %} id="deleteAllButton">🗑️ Tout supprimer</button>
+                    </div>
+                </div>
+
+                <div class="documents-list" id="documentsList">
+                    {% if files %}
+                        {% for file in files %}
+                        <div class="document-card" data-filename="{{ file.name }}">
+                            <div class="document-icon">
+                                {% if file.name.endswith('.pdf') %}📕
+                                {% elif file.name.endswith('.txt') %}📝
+                                {% elif file.name.endswith('.md') %}📗
+                                {% elif file.name.endswith('.doc') or file.name.endswith('.docx') %}📘
+                                {% else %}📄{% endif %}
+                            </div>
+                            <div class="document-info">
+                                <div class="document-name">{{ file.name }}</div>
+                                <div class="document-meta">
+                                    <span class="document-size">{{ (file.size / 1024) | round(2) }} KB</span>
+                                    <span class="document-date">{{ file.date }}</span>
+                                </div>
+                            </div>
+                            <button class="delete-button" onclick="deleteFile('{{ file.name }}')">
+                                🗑️
+                            </button>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state" id="emptyState">
+                            <div class="empty-icon">📭</div>
+                            <p>Aucun document uploadé pour le moment</p>
+                            <p class="empty-hint">Commencez par ajouter des documents ci-dessus</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </section>
+
+            <!-- Bouton pour passer à l'étape suivante -->
+            <section class="next-step-section">
+                <div class="next-step-box">
+                    <h3>Prêt pour l'étape suivante ?</h3>
+                    <p id="nextStepMessage">
+                        {% if files %}
+                        Vous avez {{ files|length }} document(s). Passez à l'indexation !
+                        {% else %}
+                        Uploadez au moins un document pour continuer.
+                        {% endif %}
+                    </p>
+                    <button class="cta-button" id="nextStepButton" {% if not files %}disabled{% endif %} onclick="window.location.href='{{ url_for('indexation') }}'">
+                        Étape 2 : Indexer les documents →
+                    </button>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>© 2025 CFTL JTIA - Tutoriel Mini-RAG | Paris</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/upload.js') }}"></script>
+</body>
+</html>
