@@ -114,7 +114,10 @@ tuto_mini-rag/
 ├── app.py                      # Application Flask principale
 ├── requirements.txt            # Dépendances Python
 ├── .env                        # Variables d'environnement (non versionné)
+├── .gitignore                  # Fichiers ignorés par git
+├── LICENSE                     # Licence du projet
 ├── modules/                    # Modules RAG
+│   ├── __init__.py            # Initialisation du package
 │   ├── document_processor.py  # Extraction de texte
 │   ├── chunker.py             # Découpage en chunks
 │   ├── indexer.py             # Indexation FAISS
@@ -128,9 +131,16 @@ tuto_mini-rag/
 │   └── navigation.html        # Menu de navigation
 ├── static/                     # Fichiers statiques
 │   ├── css/                   # Styles CSS
+│   │   ├── style.css          # Styles généraux
+│   │   ├── upload.css         # Styles page upload
+│   │   ├── indexation.css     # Styles page indexation
+│   │   └── search.css         # Styles page recherche
 │   └── js/                    # Scripts JavaScript
-├── uploads/                    # Documents uploadés
-└── data/                       # Index FAISS et métadonnées
+│       ├── upload.js          # Logique upload
+│       ├── indexation.js      # Logique indexation
+│       └── search.js          # Logique recherche/chat
+├── uploads/                    # Documents uploadés (ignoré par git)
+└── data/                       # Index FAISS et métadonnées (ignoré par git)
 ```
 
 ## 🎓 Utilisation
