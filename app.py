@@ -104,6 +104,9 @@ def get_uploaded_files():
     files_list = []
     if os.path.exists(UPLOAD_FOLDER):
         for filename in os.listdir(UPLOAD_FOLDER):
+            # Ignorer les fichiers .gitkeep
+            if filename == '.gitkeep':
+                continue
             filepath = os.path.join(UPLOAD_FOLDER, filename)
             if os.path.isfile(filepath):
                 file_stat = os.stat(filepath)
@@ -150,6 +153,24 @@ def index():
                          ollama_model=OLLAMA_MODEL if LLM_MODE == 'local' else None,
                          openai_model=OPENAI_MODEL if LLM_MODE == 'openai' else None)
 
+@app.route('/prompt-library')
+def prompt_library():
+    """
+    Bibliothèque de Prompts : Guide pour créer des prompts efficaces.
+    Explique la structure en 6 éléments d'un bon prompt pour l'IA générative
+    et fournit des exemples pratiques pour la génération de critères d'acceptation.
+    """
+    files = get_uploaded_files()
+    has_documents = len(files) > 0
+    has_index = os.path.exists(INDEX_PATH) and os.path.exists(METADATA_PATH)
+    return render_template('prompt_library.html', 
+                         has_documents=has_documents, 
+                         has_index=has_index,
+                         llm_mode=LLM_MODE,
+                         embedding_mode=EMBEDDING_MODE,
+                         ollama_model=OLLAMA_MODEL if LLM_MODE == 'local' else None,
+                         openai_model=OPENAI_MODEL if LLM_MODE == 'openai' else None)
+
 @app.route('/upload')
 def upload():
     """
@@ -161,6 +182,48 @@ def upload():
     has_index = os.path.exists(INDEX_PATH) and os.path.exists(METADATA_PATH)
     return render_template('upload.html', 
                          files=files, 
+                         has_documents=len(files) > 0, 
+                         has_index=has_index,
+                         llm_mode=LLM_MODE,
+                         embedding_mode=EMBEDDING_MODE,
+                         ollama_model=OLLAMA_MODEL if LLM_MODE == 'local' else None,
+                         openai_model=OPENAI_MODEL if LLM_MODE == 'openai' else None)
+
+@app.route('/indexation')
+def indexation():
+    """
+    Étape 2 : Page d'indexation des documents.
+    Configure les paramètres de chunking et lance la création
+    de l'index vectoriel FAISS pour la recherche.
+    """
+    files = get_uploaded_files()
+    index_exists = os.path.exists(INDEX_PATH) and os.path.exists(METADATA_PATH)
+    
+    index_stats = None
+    if index_exists and indexer and indexer.index is not None:
+        index_stats = indexer.get_stats()
+    
+    return render_template('indexation.html', 
+                         file_count=len(files), 
+                         index_exists=index_exists,
+                         index_stats=index_stats,
+                         has_documents=len(files) > 0,
+                         has_index=index_exists,
+                         llm_mode=LLM_MODE,
+                         embedding_mode=EMBEDDING_MODE,
+                         ollama_model=OLLAMA_MODEL if LLM_MODE == 'local' else None,
+                         openai_model=OPENAI_MODEL if LLM_MODE == 'openai' else None)
+
+@app.route('/search')
+def search():
+    """
+    Étape 3 : Page de recherche et utilisation des documents.
+    Interface de chat avec l'assistant testeur ISTQB qui répond
+    aux questions en se basant sur les documents indexés.
+    """
+    files = get_uploaded_files()
+    has_index = os.path.exists(INDEX_PATH) and os.path.exists(METADATA_PATH)
+    return render_template('search.html', 
                          has_documents=len(files) > 0, 
                          has_index=has_index,
                          llm_mode=LLM_MODE,
@@ -297,30 +360,7 @@ def delete_index_only():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/indexation')
-def indexation():
-    """
-    Étape 2 : Page d'indexation des documents.
-    Configure les paramètres de chunking et lance la création
-    de l'index vectoriel FAISS pour la recherche.
-    """
-    files = get_uploaded_files()
-    index_exists = os.path.exists(INDEX_PATH) and os.path.exists(METADATA_PATH)
-    
-    index_stats = None
-    if index_exists and indexer and indexer.index is not None:
-        index_stats = indexer.get_stats()
-    
-    return render_template('indexation.html', 
-                         file_count=len(files), 
-                         index_exists=index_exists,
-                         index_stats=index_stats,
-                         has_documents=len(files) > 0,
-                         has_index=index_exists,
-                         llm_mode=LLM_MODE,
-                         embedding_mode=EMBEDDING_MODE,
-                         ollama_model=OLLAMA_MODEL if LLM_MODE == 'local' else None,
-                         openai_model=OPENAI_MODEL if LLM_MODE == 'openai' else None)
+
 
 @app.route('/api/index', methods=['POST'])
 def create_index():
@@ -431,23 +471,6 @@ def get_index_stats():
         print(f"Erreur lors de la récupération des stats: {str(e)}")
         return jsonify({'indexed': False, 'error': str(e)})
 
-@app.route('/search')
-def search():
-    """
-    Étape 3 : Page de recherche et utilisation des documents.
-    Interface de chat avec l'assistant testeur ISTQB qui répond
-    aux questions en se basant sur les documents indexés.
-    """
-    files = get_uploaded_files()
-    has_index = os.path.exists(INDEX_PATH) and os.path.exists(METADATA_PATH)
-    return render_template('search.html', 
-                         has_documents=len(files) > 0, 
-                         has_index=has_index,
-                         llm_mode=LLM_MODE,
-                         embedding_mode=EMBEDDING_MODE,
-                         ollama_model=OLLAMA_MODEL if LLM_MODE == 'local' else None,
-                         openai_model=OPENAI_MODEL if LLM_MODE == 'openai' else None)
-
 @app.route('/api/search', methods=['POST'])
 def search_documents():
     """
@@ -467,6 +490,7 @@ def search_documents():
         top_k = data.get('top_k', 5)
         temperature = data.get('temperature', 0.7)
         max_tokens = data.get('max_tokens', 500)
+        custom_system_prompt = data.get('system_prompt', '')
         
         if not question:
             return jsonify({'success': False, 'error': 'Question non fournie'}), 400
@@ -500,7 +524,11 @@ def search_documents():
         ])
         
         # 3. Générer la réponse selon le mode LLM
-        system_prompt = """Tu es un testeur certifié ISTQB (International Software Testing Qualifications Board) avec une expertise approfondie en assurance qualité logicielle. 
+        # Utiliser le prompt système personnalisé s'il est fourni, sinon utiliser le prompt par défaut
+        if custom_system_prompt:
+            system_prompt = custom_system_prompt
+        else:
+            system_prompt = """Tu es un testeur certifié ISTQB (International Software Testing Qualifications Board) avec une expertise approfondie en assurance qualité logicielle. 
 
         Ton rôle est d'assister dans toutes les activités de test selon le processus ISTQB :
 
@@ -546,6 +574,11 @@ def search_documents():
                 temperature=temperature
             )
             llm_model = OLLAMA_MODEL
+            
+            # Estimation approximative des tokens pour Ollama (1 token ≈ 4 caractères)
+            prompt_tokens = len(prompt) // 4
+            completion_tokens = len(answer) // 4
+            total_tokens = prompt_tokens + completion_tokens
         else:
             # Mode OpenAI avec historique de conversation
             from openai import OpenAI
@@ -587,6 +620,11 @@ def search_documents():
             
             answer = response.choices[0].message.content
             llm_model = OPENAI_MODEL
+            
+            # Récupérer les tokens utilisés depuis OpenAI
+            prompt_tokens = response.usage.prompt_tokens
+            completion_tokens = response.usage.completion_tokens
+            total_tokens = response.usage.total_tokens
         
         return jsonify({
             'success': True,
@@ -594,12 +632,18 @@ def search_documents():
             'sources': search_results,
             'llm_mode': LLM_MODE,
             'llm_model': llm_model,
-            'embedding_mode': EMBEDDING_MODE
+            'embedding_mode': EMBEDDING_MODE,
+            'tokens': {
+                'prompt_tokens': prompt_tokens,
+                'completion_tokens': completion_tokens,
+                'total_tokens': total_tokens
+            }
         })
         
     except Exception as e:
         print(f"Erreur lors de la recherche: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
 
 if __name__ == '__main__':
     # Charger l'index au démarrage si il existe

@@ -4,14 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tutoriel Mini-RAG - CFTL JTIA 2025</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/cftl_icon.png') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
     <div class="container">
         <header>
             <div class="logo-section">
-                <h1>🚀 Mini-RAG Pipeline</h1>
-                <p class="subtitle">CFTL JTIA 2025 - Paris</p>
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap;">
+                    <a href="https://www.cftl.fr" target="_blank" rel="noopener noreferrer" style="flex: 0 0 auto;">
+                        <img src="{{ url_for('static', filename='images/cftl_logo.svg') }}" alt="CFTL Logo" style="height: 60px; transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    </a>
+                    <div style="flex: 1; text-align: center;">
+                        <h1>🚀 Mini-RAG Pipeline</h1>
+                        <p class="subtitle">CFTL JTIA 2025 - Paris</p>
+                    </div>
+                    <a href="https://www.uaestqb.ae" target="_blank" rel="noopener noreferrer" style="flex: 0 0 auto;">
+                        <img src="{{ url_for('static', filename='images/uaestqb_logo.svg') }}" alt="UAESTQB Logo" style="height: 60px; transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    </a>
+                </div>
             </div>
             {% include 'navigation.html' %}
             
@@ -45,6 +56,7 @@
             <nav class="page-navigation">
                 <h3>📑 Navigation</h3>
                 <ul>
+                    <li><a href="{{ url_for('prompt_library') }}">📚 Prompt Library</a></li>
                     <li><a href="#description">📋 Description du Tutoriel</a></li>
                     <li><a href="#openai">🤖 OpenAI Embeddings</a></li>
                     <li><a href="#faiss">🗄️ FAISS</a></li>
@@ -52,6 +64,7 @@
                     <li><a href="#objectifs">🎯 Objectifs d'Apprentissage</a></li>
                     <li><a href="#stack">🛠️ Stack Technique</a></li>
                     <li><a href="#prerequis">✅ Prérequis</a></li>
+                    <li><a href="#limitations">⚠️ Limitations</a></li>
                     <li><a href="#confidentialite">🔒 Confidentialité</a></li>
                     <li><a href="#local">🏡 Mode Local</a></li>
                 </ul>
@@ -90,7 +103,7 @@
                         Les participants construiront, <strong>en local avec VS Code</strong>, un mini-pipeline RAG 
                         combinant <strong>OpenAI Embeddings</strong> et <strong>FAISS</strong> pour indexer un corpus 
                         (spécifications, user stories, tickets, …), interroger efficacement les documents, 
-                        puis générer automatiquement des cas de test ainsi qu'un rapport QA.
+                        puis générer automatiquement des cas de test.
                     </p>
                     
                     <p>
@@ -352,6 +365,43 @@
                             <li>Compréhension des concepts de <strong>NLP</strong> (Natural Language Processing)</li>
                             <li>Familiarité avec les <strong>API REST</strong></li>
                             <li>Intérêt pour le <strong>testing automatisé</strong> et la QA</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section class="limitations-section" id="limitations">
+                <h3>⚠️ Limitations du Système</h3>
+                <div class="description-content">
+                    <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                        <h4 style="margin: 0 0 15px 0; color: #856404;">📄 Traitement du texte uniquement</h4>
+                        <p style="margin: 0 0 10px 0; color: #856404; line-height: 1.8;">
+                            Le système extrait <strong>uniquement le contenu textuel</strong> des documents. 
+                            Les éléments suivants ne sont <strong>pas traités</strong> :
+                        </p>
+                        <ul style="color: #856404; line-height: 1.8; margin: 10px 0; list-style: none; padding-left: 0;">
+                            <li><strong>❌ Images</strong> : Graphiques, diagrammes, captures d'écran</li>
+                            <li><strong>❌ Tableaux complexes</strong> : La structure peut être perdue</li>
+                            <li><strong>❌ Formules visuelles</strong> : Équations sous forme d'image</li>
+                            <li><strong>✅ Texte</strong> : Paragraphes, listes, titres extraits correctement</li>
+                        </ul>
+                    </div>
+                    
+                    <p>
+                        <strong>Modules d'extraction utilisés :</strong>
+                    </p>
+                    <ul style="list-style: none; padding-left: 0;">
+                        <li><strong>PDF</strong> : PyPDF2 - Extraction de texte uniquement</li>
+                        <li><strong>DOCX</strong> : python-docx - Extraction de texte uniquement</li>
+                        <li><strong>TXT/MD</strong> : Lecture complète du contenu</li>
+                    </ul>
+                    
+                    <div style="background: #f0f4ff; border-left: 4px solid #667eea; padding: 15px; border-radius: 8px; margin-top: 20px;">
+                        <p style="margin: 0 0 10px 0;"><strong>💡 Recommandations :</strong></p>
+                        <ul style="margin: 0; line-height: 1.8; list-style: none; padding-left: 0;">
+                            <li>Privilégiez les documents avec du texte structuré</li>
+                            <li>Ajoutez des descriptions textuelles pour les informations visuelles importantes</li>
+                            <li>Les légendes d'images seront indexées si elles sont en texte</li>
                         </ul>
                     </div>
                 </div>

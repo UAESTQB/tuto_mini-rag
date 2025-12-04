@@ -239,6 +239,31 @@ curl -X POST http://localhost:5000/api/search \
 - ✅ Paramètres ajustables (top_k, température, max_tokens)
 - ✅ Affichage des sources utilisées
 
+## ⚠️ Limitations
+
+### Traitement du texte uniquement
+**Le système extrait uniquement le contenu textuel des documents :**
+- ❌ **Images** : Graphiques, diagrammes, captures d'écran ne sont pas traités
+- ❌ **Tableaux complexes** : Seul le texte est extrait, la structure peut être perdue
+- ❌ **Formules visuelles** : Équations sous forme d'image ne sont pas reconnues
+- ✅ **Texte** : Paragraphes, listes, titres sont correctement extraits
+
+**Modules d'extraction utilisés :**
+- **PDF** : `PyPDF2` - Extraction de texte uniquement
+- **DOCX** : `python-docx` - Extraction de texte uniquement
+- **TXT/MD** : Lecture complète du contenu
+
+**Recommandations :**
+- Privilégiez les documents avec du texte structuré
+- Ajoutez des descriptions textuelles pour les informations visuelles importantes
+- Pour les tableaux, préférez des formats avec texte lisible
+- Les légendes d'images seront indexées si elles sont en texte
+
+**Évolutions possibles :**
+- Intégration d'OCR (Optical Character Recognition) pour extraire le texte des images
+- Support de GPT-4 Vision pour l'analyse multimodale des documents
+- Extraction avancée de tableaux avec préservation de la structure
+
 ## 🎯 Concepts couverts
 
 - **Chunking** : Découpage intelligent de documents

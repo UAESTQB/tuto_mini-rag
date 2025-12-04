@@ -2,6 +2,7 @@
 
 let isProcessing = false;
 let conversationHistory = []; // Historique de la conversation
+let totalTokensUsed = 0; // Compteur total de tokens
 
 // Charger les stats de l'index au démarrage
 async function loadIndexStats() {
@@ -151,6 +152,7 @@ async function sendQuestion() {
     const topK = parseInt(document.getElementById('topK').value);
     const temperature = parseFloat(document.getElementById('temperature').value);
     const maxTokens = parseInt(document.getElementById('maxTokens').value);
+    const systemPrompt = document.getElementById('systemPrompt').value.trim();
     
     // Afficher la question de l'utilisateur
     addMessage('user', question);
@@ -182,7 +184,8 @@ async function sendQuestion() {
                 conversation_history: conversationHistory,
                 top_k: topK,
                 temperature: temperature,
-                max_tokens: maxTokens
+                max_tokens: maxTokens,
+                system_prompt: systemPrompt
             })
         });
         
@@ -199,8 +202,14 @@ async function sendQuestion() {
                 content: data.answer
             });
             
-            // Mettre à jour le compteur d'historique
+            // Mettre à jour les compteurs
             updateHistoryCount();
+            
+            // Mettre à jour le compteur de tokens
+            if (data.tokens) {
+                totalTokensUsed += data.tokens.total_tokens;
+                updateTokenCount(data.tokens);
+            }
         } else {
             showError(data.error || 'Erreur lors de la recherche');
         }
@@ -242,10 +251,27 @@ function updateHistoryCount() {
     }
 }
 
+// Fonction pour mettre à jour le compteur de tokens
+function updateTokenCount(tokens) {
+    const tokenCount = document.getElementById('tokenCount');
+    if (tokenCount && tokens) {
+        tokenCount.innerHTML = `🎯 Tokens: <strong>${totalTokensUsed.toLocaleString()}</strong> total<br>
+        <span style="font-size: 0.85em; opacity: 0.8;">(Dernier: ${tokens.total_tokens.toLocaleString()} | Prompt: ${tokens.prompt_tokens.toLocaleString()} | Réponse: ${tokens.completion_tokens.toLocaleString()})</span>`;
+    }
+}
+
 // Fonction pour effacer l'historique
 function clearHistory() {
     conversationHistory = [];
+    totalTokensUsed = 0;
     updateHistoryCount();
+    updateTokenCount(null);
+    
+    // Réinitialiser l'affichage du compteur
+    const tokenCount = document.getElementById('tokenCount');
+    if (tokenCount) {
+        tokenCount.innerHTML = '🎯 Tokens utilisés: 0';
+    }
     
     // Effacer visuellement les messages (garder seulement le message de bienvenue)
     const messagesContainer = document.getElementById('chatMessages');

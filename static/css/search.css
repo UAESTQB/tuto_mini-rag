@@ -339,6 +339,25 @@
     font-size: 1rem;
 }
 
+.setting-item textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 0.9em;
+    line-height: 1.6;
+    resize: vertical;
+    min-height: 150px;
+    transition: border-color 0.3s;
+}
+
+.setting-item textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
 .setting-item input[type="range"] {
     padding: 0;
 }
@@ -354,6 +373,26 @@
     display: block;
     margin-top: 5px;
     color: #666;
+    font-size: 0.85rem;
+}
+
+.setting-item .param-explanation {
+    margin-top: 12px;
+    padding: 12px;
+    background: #f0f4ff;
+    border-left: 4px solid #667eea;
+    border-radius: 5px;
+    font-size: 0.9rem;
+    line-height: 1.7;
+    color: #444;
+}
+
+.setting-item .param-explanation strong {
+    color: #667eea;
+}
+
+.setting-item .param-explanation em {
+    color: #888;
     font-size: 0.85rem;
 }
 

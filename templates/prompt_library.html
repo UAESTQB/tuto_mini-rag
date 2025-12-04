@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prompt Library - Mini-RAG</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/cftl_icon.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/prompt_library.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo-section">
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap;">
+                    <a href="https://www.cftl.fr" target="_blank" rel="noopener noreferrer" style="flex: 0 0 auto;">
+                        <img src="{{ url_for('static', filename='images/cftl_logo.svg') }}" alt="CFTL Logo" style="height: 60px; transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    </a>
+                    <div style="flex: 1; text-align: center;">
+                        <h1>📚 Bibliothèque de Prompts</h1>
+                        <p class="subtitle">Comment créer des prompts efficaces pour l'IA générative</p>
+                    </div>
+                    <a href="https://www.uaestqb.ae" target="_blank" rel="noopener noreferrer" style="flex: 0 0 auto;">
+                        <img src="{{ url_for('static', filename='images/uaestqb_logo.svg') }}" alt="UAESTQB Logo" style="height: 60px; transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    </a>
+                </div>
+            </div>
+            {% include 'navigation.html' %}
+        </header>
+
+        <main>
+            <!-- Introduction -->
+            <section class="intro-section">
+                <div class="info-card">
+                    <h2>Structure des requêtes pour l'IA générative dans les tests logiciels</h2>
+                    <p>Six éléments pour des résultats LLM fiables et adaptés au contexte</p>
+                    <p>Un prompt bien structuré guide le LLM afin qu'il produise des résultats précis, pertinents et exploitables pour les tâches de test.</p>
+                </div>
+            </section>
+
+            <!-- Les 6 éléments d'un bon prompt -->
+            <section class="prompt-structure">
+                <h2>🎯 Les 6 éléments d'un prompt complet</h2>
+                
+                <div class="prompt-elements">
+                    <div class="prompt-element">
+                        <div class="element-header role">
+                            <span class="element-icon">👤</span>
+                            <h3>1. Rôle</h3>
+                        </div>
+                        <div class="element-content">
+                            <p><strong>Définit la perspective ou la fonction que le LLM doit adopter</strong></p>
+                            <p class="example">Par exemple : analyste de test, ingénieur en automatisation</p>
+                        </div>
+                    </div>
+
+                    <div class="prompt-element">
+                        <div class="element-header context">
+                            <span class="element-icon">🌍</span>
+                            <h3>2. Contexte</h3>
+                        </div>
+                        <div class="element-content">
+                            <p><strong>Fournit des informations générales sur le système testé, l'environnement ou l'objectif de la tâche</strong></p>
+                            <p class="example">Par exemple : système de gestion de commerce électronique, environnement de test automatisé</p>
+                        </div>
+                    </div>
+
+                    <div class="prompt-element">
+                        <div class="element-header instructions">
+                            <span class="element-icon">📋</span>
+                            <h3>3. Instructions</h3>
+                        </div>
+                        <div class="element-content">
+                            <p><strong>Spécifie clairement la tâche à effectuer</strong></p>
+                            <p class="example">Par exemple : générer des cas de test, identifier les exigences manquantes</p>
+                        </div>
+                    </div>
+
+                    <div class="prompt-element">
+                        <div class="element-header data">
+                            <span class="element-icon">📄</span>
+                            <h3>4. Données d'entrée</h3>
+                        </div>
+                        <div class="element-content">
+                            <p><strong>Inclut les documents sources nécessaires</strong></p>
+                            <p class="example">Par exemple : récits d'utilisateurs, captures d'écran, journaux de test, extraits de code</p>
+                        </div>
+                    </div>
+
+                    <div class="prompt-element">
+                        <div class="element-header constraints">
+                            <span class="element-icon">⚙️</span>
+                            <h3>5. Contraintes</h3>
+                        </div>
+                        <div class="element-content">
+                            <p><strong>Règles ou limites à respecter</strong></p>
+                            <p class="example">Par exemple : style linguistique, type de test, conventions de dénomination</p>
+                        </div>
+                    </div>
+
+                    <div class="prompt-element">
+                        <div class="element-header output">
+                            <span class="element-icon">📊</span>
+                            <h3>6. Format de sortie</h3>
+                        </div>
+                        <div class="element-content">
+                            <p><strong>Spécifie comment la réponse doit être structurée</strong></p>
+                            <p class="example">Par exemple : liste, tableau, format Gherkin</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Exemple pratique -->
+            <section class="example-section">
+                <h2>💡 Exemple pratique : Génération de cas de test</h2>
+                
+                <!-- Prompt complet -->
+                <div class="example-card full-prompt">
+                    <h3>📄 Prompt complet</h3>
+                    <div class="full-prompt-content">
+                        <pre>En tant qu'ingénieur senior en automatisation, tu testes la nouvelle fonctionnalité « Ajouter au panier » d'une librairie en ligne. Génère un ensemble de cas de test positifs et négatifs de bout en bout. Utilise le scénario utilisateur fourni et ses critères d'acceptation. Suppose que l'utilisateur est connecté. Concentre-toi uniquement sur les tests fonctionnels. Structure la réponse à l'aide de la syntaxe Gherkin (Given, When, Then).</pre>
+                    </div>
+                </div>
+
+                <!-- Découpage en 6 parties (collapsible) -->
+                <div class="decomposition-section">
+                    <details>
+                        <summary>🔍 Voir la décomposition du prompt en 6 éléments</summary>
+                        <div class="example-card">
+                            <div class="example-prompt">
+                                <div class="prompt-part role-part">
+                                    <span class="part-label">Rôle</span>
+                                    <p>En tant qu'ingénieur senior en automatisation,</p>
+                                </div>
+                                
+                                <div class="prompt-part context-part">
+                                    <span class="part-label">Contexte</span>
+                                    <p>tu testes la nouvelle fonctionnalité « Ajouter au panier » d'une librairie en ligne.</p>
+                                </div>
+                                
+                                <div class="prompt-part instructions-part">
+                                    <span class="part-label">Instructions</span>
+                                    <p>Génère un ensemble de cas de test positifs et négatifs de bout en bout.</p>
+                                </div>
+                                
+                                <div class="prompt-part data-part">
+                                    <span class="part-label">Données d'entrée</span>
+                                    <p>Utilise le scénario utilisateur fourni et ses critères d'acceptation.</p>
+                                </div>
+                                
+                                <div class="prompt-part constraints-part">
+                                    <span class="part-label">Contraintes</span>
+                                    <p>Suppose que l'utilisateur est connecté. Concentre-toi uniquement sur les tests fonctionnels.</p>
+                                </div>
+                                
+                                <div class="prompt-part output-part">
+                                    <span class="part-label">Format de sortie</span>
+                                    <p>Structure la réponse à l'aide de la syntaxe Gherkin (Given, When, Then).</p>
+                                </div>
+                            </div>
+                        </div>
+                    </details>
+                </div>
+            </section>
+
+            <!-- Section Exemples de prompts pour SauceDemo -->
+            <section class="templates-section">
+                <h2>🎨 Exemples de prompts pour vos documents</h2>
+                <p class="templates-intro">Utilisez ces exemples de prompts pour générer des critères d'acceptation à partir de vos exigences indexées.</p>
+                
+                <div class="prompt-templates">
+                    <div class="template-card">
+                        <h3>📝 Génération de critères d'acceptation</h3>
+                        <div class="template-content">
+                            <pre>En tant qu'analyste de test senior,
+
+tu analyses le document d'exigences de SauceDemo.
+
+Génère des critères d'acceptation détaillés pour l'exigence [numéro ou nom].
+
+Utilise les spécifications fonctionnelles fournies dans les documents indexés.
+
+Les critères doivent être testables, mesurables et non ambigus.
+
+Structure la réponse sous forme de liste numérotée avec des conditions Given/When/Then.</pre>
+                            <button class="copy-btn" onclick="copyTemplate(this)">📋 Copier</button>
+                        </div>
+                    </div>
+
+                    <div class="template-card">
+                        <h3>🔍 Identification des scénarios de test</h3>
+                        <div class="template-content">
+                            <pre>En tant qu'ingénieur en test,
+
+tu travailles sur l'application SauceDemo décrite dans les documents.
+
+Identifie tous les scénarios de test positifs et négatifs pour la fonctionnalité [nom].
+
+Base-toi sur les exigences et les user stories du document indexé.
+
+Inclus les cas limites et les chemins alternatifs.
+
+Présente les résultats sous forme de tableau avec colonnes : ID, Scénario, Type, Priorité.</pre>
+                            <button class="copy-btn" onclick="copyTemplate(this)">📋 Copier</button>
+                        </div>
+                    </div>
+
+                    <div class="template-card">
+                        <h3>✅ Validation de la complétude des exigences</h3>
+                        <div class="template-content">
+                            <pre>En tant qu'analyste qualité,
+
+tu évalues le document d'exigences SauceDemo.
+
+Analyse la complétude et la cohérence des exigences concernant [fonctionnalité].
+
+Utilise les documents indexés comme référence.
+
+Identifie les exigences manquantes, ambiguës ou contradictoires.
+
+Fournis un rapport structuré avec sections : Complètes, Incomplètes, Recommandations.</pre>
+                            <button class="copy-btn" onclick="copyTemplate(this)">📋 Copier</button>
+                        </div>
+                    </div>
+
+                    <div class="template-card">
+                        <h3>🧪 Génération de cas de test Gherkin</h3>
+                        <div class="template-content">
+                            <pre>En tant qu'ingénieur en automatisation,
+
+tu crées des scénarios de test pour SauceDemo.
+
+Génère des cas de test en syntaxe Gherkin pour l'exigence [numéro].
+
+Base-toi sur les critères d'acceptation des documents indexés.
+
+Couvre les scénarios nominaux et alternatifs.
+
+Format : Feature / Scenario / Given-When-Then avec des exemples concrets.</pre>
+                            <button class="copy-btn" onclick="copyTemplate(this)">📋 Copier</button>
+                        </div>
+                    </div>
+
+                    <div class="template-card">
+                        <h3>🎯 Analyse de risques et priorités</h3>
+                        <div class="template-content">
+                            <pre>En tant que test manager,
+
+tu évalues les risques de l'application SauceDemo.
+
+Identifie les zones à risque élevé pour la fonctionnalité [nom] selon les documents.
+
+Utilise les spécifications techniques et fonctionnelles indexées.
+
+Considère la criticité métier, la complexité technique et l'historique des bugs.
+
+Présente un tableau avec : Zone, Niveau de risque, Impact, Recommandations de test.</pre>
+                            <button class="copy-btn" onclick="copyTemplate(this)">📋 Copier</button>
+                        </div>
+                    </div>
+
+                    <div class="template-card">
+                        <h3>🔄 Génération de données de test</h3>
+                        <div class="template-content">
+                            <pre>En tant qu'ingénieur de test,
+
+tu prépares les données pour tester SauceDemo.
+
+Génère des jeux de données de test pour le scénario [nom].
+
+Base-toi sur les règles métier et contraintes du document indexé.
+
+Couvre les valeurs valides, limites, invalides et cas aux limites.
+
+Format : tableau avec colonnes Cas, Données d'entrée, Résultat attendu.</pre>
+                            <button class="copy-btn" onclick="copyTemplate(this)">📋 Copier</button>
+                        </div>
+                    </div>
+
+                    <div class="template-card">
+                        <h3>📋 Revue de testabilité des exigences</h3>
+                        <div class="template-content">
+                            <pre>En tant qu'analyste qualité senior,
+
+tu effectues une revue de testabilité du document SauceDemo.
+
+Évalue la testabilité des exigences de la section [nom].
+
+Utilise les documents d'exigences indexés comme source.
+
+Vérifie : clarté, complétude, cohérence, mesurabilité, faisabilité.
+
+Fournis pour chaque exigence : Note (1-5), Points positifs, Améliorations suggérées.</pre>
+                            <button class="copy-btn" onclick="copyTemplate(this)">📋 Copier</button>
+                        </div>
+                    </div>
+
+                    <div class="template-card">
+                        <h3>🐛 Identification des classes d'équivalence</h3>
+                        <div class="template-content">
+                            <pre>En tant que testeur expérimenté,
+
+tu appliques la technique des classes d'équivalence sur SauceDemo.
+
+Identifie les classes d'équivalence pour le champ [nom du champ].
+
+Base-toi sur les règles de validation du document indexé.
+
+Distingue les classes valides et invalides avec leurs limites.
+
+Format : tableau avec Type, Classe, Valeurs exemples, Test associé.</pre>
+                            <button class="copy-btn" onclick="copyTemplate(this)">📋 Copier</button>
+                        </div>
+                    </div>
+
+                    <div class="template-card">
+                        <h3>⚡ Génération de tests de performance</h3>
+                        <div class="template-content">
+                            <pre>En tant qu'ingénieur performance,
+
+tu conçois des tests de charge pour SauceDemo.
+
+Génère des scénarios de test de performance pour [fonctionnalité].
+
+Utilise les exigences non-fonctionnelles des documents indexés.
+
+Inclus : charge normale, pic, endurance et tests de stress.
+
+Format : Scénario, Utilisateurs simultanés, Durée, KPIs attendus.</pre>
+                            <button class="copy-btn" onclick="copyTemplate(this)">📋 Copier</button>
+                        </div>
+                    </div>
+
+                    <div class="template-card">
+                        <h3>🔒 Tests de sécurité et vulnérabilités</h3>
+                        <div class="template-content">
+                            <pre>En tant qu'analyste sécurité,
+
+tu évalues les risques de sécurité de SauceDemo.
+
+Identifie les tests de sécurité nécessaires pour [fonctionnalité].
+
+Base-toi sur les flux d'authentification et autorisations du document.
+
+Couvre : injection SQL, XSS, CSRF, gestion des sessions, droits d'accès.
+
+Présente : Vulnérabilité potentielle, Test à effectuer, Sévérité.</pre>
+                            <button class="copy-btn" onclick="copyTemplate(this)">📋 Copier</button>
+                        </div>
+                    </div>
+
+                    <div class="template-card">
+                        <h3>📱 Tests de compatibilité multi-plateforme</h3>
+                        <div class="template-content">
+                            <pre>En tant que testeur multi-plateforme,
+
+tu planifies les tests de compatibilité pour SauceDemo.
+
+Définis la matrice de test pour la fonctionnalité [nom].
+
+Utilise les contraintes techniques des documents indexés.
+
+Couvre : navigateurs, systèmes d'exploitation, résolutions d'écran.
+
+Format : tableau Plateforme, Version, Navigateur, Tests prioritaires.</pre>
+                            <button class="copy-btn" onclick="copyTemplate(this)">📋 Copier</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Conseils -->
+            <section class="tips-section">
+                <h2>💡 Conseils pour des prompts efficaces</h2>
+                <div class="tips-grid">
+                    <div class="tip-card">
+                        <h4>🎯 Soyez spécifique</h4>
+                        <p>Plus votre prompt est précis, meilleure sera la réponse. Évitez les demandes vagues.</p>
+                    </div>
+                    <div class="tip-card">
+                        <h4>📚 Fournissez du contexte</h4>
+                        <p>Le LLM a besoin de comprendre le contexte pour générer des résultats pertinents.</p>
+                    </div>
+                    <div class="tip-card">
+                        <h4>✏️ Itérez et affinez</h4>
+                        <p>N'hésitez pas à reformuler ou préciser votre prompt si le résultat n'est pas satisfaisant.</p>
+                    </div>
+                    <div class="tip-card">
+                        <h4>📋 Structurez vos demandes</h4>
+                        <p>Utilisez les 6 éléments pour construire des prompts complets et efficaces.</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>© 2025 CFTL JTIA - Tutoriel Mini-RAG | Paris</p>
+        </footer>
+    </div>
+
+    <script>
+        function copyTemplate(button) {
+            const template = button.previousElementSibling.textContent;
+            navigator.clipboard.writeText(template).then(() => {
+                const originalText = button.innerHTML;
+                button.innerHTML = '✅ Copié !';
+                button.style.background = '#28a745';
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.style.background = '';
+                }, 2000);
+            }).catch(err => {
+                console.error('Erreur de copie:', err);
+                alert('Erreur lors de la copie');
+            });
+        }
+
+        function copyFullPrompt(button) {
+            const prompt = button.previousElementSibling.textContent;
+            navigator.clipboard.writeText(prompt).then(() => {
+                const originalText = button.innerHTML;
+                button.innerHTML = '✅ Copié !';
+                button.style.background = '#28a745';
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.style.background = '#667eea';
+                }, 2000);
+            }).catch(err => {
+                console.error('Erreur de copie:', err);
+                alert('Erreur lors de la copie');
+            });
+        }
+    </script>
+</body>
+</html>

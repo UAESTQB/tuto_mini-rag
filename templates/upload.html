@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload Documents - Mini-RAG</title>
+    <title>Upload - Mini-RAG</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/cftl_icon.png') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/upload.css') }}">
 </head>
@@ -11,8 +12,18 @@
     <div class="container">
         <header>
             <div class="logo-section">
-                <h1>📄 Upload de Documents</h1>
-                <p class="subtitle">Étape 1 : Préparez votre corpus</p>
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap;">
+                    <a href="https://www.cftl.fr" target="_blank" rel="noopener noreferrer" style="flex: 0 0 auto;">
+                        <img src="{{ url_for('static', filename='images/cftl_logo.svg') }}" alt="CFTL Logo" style="height: 60px; transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    </a>
+                    <div style="flex: 1; text-align: center;">
+                        <h1>📄 Upload de Documents</h1>
+                        <p class="subtitle">Étape 1 : Préparez votre corpus</p>
+                    </div>
+                    <a href="https://www.uaestqb.ae" target="_blank" rel="noopener noreferrer" style="flex: 0 0 auto;">
+                        <img src="{{ url_for('static', filename='images/uaestqb_logo.svg') }}" alt="UAESTQB Logo" style="height: 60px; transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    </a>
+                </div>
             </div>
             {% include 'navigation.html' %}
             
@@ -50,6 +61,19 @@
                     <p class="info-text">
                         💡 <strong>Conseil :</strong> Pour de meilleurs résultats, utilisez des documents structurés 
                         (spécifications, user stories, tickets, documentation technique).
+                    </p>
+                </div>
+
+                <!-- Avertissement images -->
+                <div class="warning-box" style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 5px;">
+                    <h4 style="margin: 0 0 10px 0; color: #856404;">⚠️ Limitation : Traitement du texte uniquement</h4>
+                    <p style="margin: 0; color: #856404; line-height: 1.6;">
+                        <strong>Le système extrait uniquement le texte des documents.</strong> Les images, graphiques, diagrammes et tableaux complexes ne sont pas traités. 
+                        Seul le contenu textuel sera indexé et utilisable pour la recherche.
+                    </p>
+                    <p style="margin: 10px 0 0 0; color: #856404;">
+                        💡 <strong>Astuce :</strong> Si vos documents contiennent des informations importantes dans les images, 
+                        ajoutez des descriptions textuelles ou légendes pour qu'elles soient prises en compte.
                     </p>
                 </div>
 

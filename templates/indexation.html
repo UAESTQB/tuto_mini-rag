@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Indexation - Mini-RAG</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/cftl_icon.png') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/indexation.css') }}">
 </head>
@@ -11,8 +12,18 @@
     <div class="container">
         <header>
             <div class="logo-section">
-                <h1>⚡ Indexation des Documents</h1>
-                <p class="subtitle">Étape 2 : Créer l'index vectoriel FAISS</p>
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap;">
+                    <a href="https://www.cftl.fr" target="_blank" rel="noopener noreferrer" style="flex: 0 0 auto;">
+                        <img src="{{ url_for('static', filename='images/cftl_logo.svg') }}" alt="CFTL Logo" style="height: 60px; transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    </a>
+                    <div style="flex: 1; text-align: center;">
+                        <h1>⚡ Indexation des Documents</h1>
+                        <p class="subtitle">Étape 2 : Créer l'index vectoriel FAISS</p>
+                    </div>
+                    <a href="https://www.uaestqb.ae" target="_blank" rel="noopener noreferrer" style="flex: 0 0 auto;">
+                        <img src="{{ url_for('static', filename='images/uaestqb_logo.svg') }}" alt="UAESTQB Logo" style="height: 60px; transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    </a>
+                </div>
             </div>
             {% include 'navigation.html' %}
             
@@ -132,6 +143,21 @@
                     </div>
                     {% endif %}
                 </div>
+                 <!-- Avertissement changement de mode -->
+                {% if index_exists %}
+                <section class="warning-section" style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 5px;">
+                    <h4 style="margin: 0 0 10px 0; color: #856404;">⚠️ Important : Cohérence des embeddings</h4>
+                    <p style="margin: 0; color: #856404;">
+                        L'index actuel a été créé en mode <strong>{{ embedding_mode }}</strong>. 
+                        Si vous changez le mode d'embedding dans le fichier <code>.env</code>, 
+                        vous devez <strong>supprimer et ré-indexer</strong> vos documents.
+                    </p>
+                    <p style="margin: 10px 0 0 0; color: #856404;">
+                        <strong>Raison :</strong> OpenAI (1536D) et Sentence Transformers (384D) produisent des vecteurs 
+                        de dimensions différentes et incompatibles. Le LLM peut être changé librement.
+                    </p>
+                </section>
+                {% endif %}
             </section>
 
             <!-- Bouton d'indexation -->
@@ -157,21 +183,7 @@
                 {% endif %}
             </section>
 
-            <!-- Avertissement changement de mode -->
-            {% if index_exists %}
-            <section class="warning-section" style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 5px;">
-                <h4 style="margin: 0 0 10px 0; color: #856404;">⚠️ Important : Cohérence des embeddings</h4>
-                <p style="margin: 0; color: #856404;">
-                    L'index actuel a été créé en mode <strong>{{ embedding_mode }}</strong>. 
-                    Si vous changez le mode d'embedding dans le fichier <code>.env</code>, 
-                    vous devez <strong>supprimer et ré-indexer</strong> vos documents.
-                </p>
-                <p style="margin: 10px 0 0 0; color: #856404;">
-                    <strong>Raison :</strong> OpenAI (1536D) et Sentence Transformers (384D) produisent des vecteurs 
-                    de dimensions différentes et incompatibles. Le LLM peut être changé librement.
-                </p>
-            </section>
-            {% endif %}
+           
 
             <!-- Progression de l'indexation -->
             <section class="progress-section" id="progressSection" style="display: none;">

@@ -1,5 +1,10 @@
 <!-- Navigation commune pour toutes les pages -->
 <nav class="steps-nav">
+    <a href="{{ url_for('prompt_library') }}" class="step-link {% if request.endpoint == 'prompt_library' %}active{% endif %}" title="Bibliothèque de Prompts">
+        <span class="step-number">📚</span>
+        <span class="step-label">Prompt Library</span>
+    </a>
+    
     <a href="{{ url_for('index') }}" class="step-link home-link {% if request.endpoint == 'index' %}active{% endif %}" title="Retour à l'accueil">
         <span class="step-number">🏠</span>
         <span class="step-label">Accueil</span>
